@@ -4,19 +4,19 @@ from wcwidth import wcwidth
 def render(jinx, s, e):
 	l, p = len(jinx), jinx.position
 	char2 = None # TODO
-	cells = draw.Draw()
-	cells.text(" ")
+	out = draw.Draw()
+	out.text(" ")
 	for o in range(s, e):
 		if char2:
-			cells.push()
+			out.push()
 			if o == p:
-				cells.fg(0).bg(7)
+				out.fg(0).bg(7)
 			if o == s:
-				cells.str.write("\x1B[D")
-				cells.dim().text(char2)
+				out.str.write("\x1B[D")
+				out.dim().text(char2)
 
-			cells.bg(None)
-			cells.pop()
+			out.bg(None)
+			out.pop()
 			char2 = None
 		else:
 			byte = jinx[o] if 0 <= o < l else None
@@ -24,28 +24,28 @@ def render(jinx, s, e):
 			char2 = sjis2Table.get((byte, bytex))
 			char = char2 or sjisTable.get(byte)
 
-			cells.push()
+			out.push()
 			if o == p or char2 and o+1 == p:
-				cells.fg(0).bg(7)
+				out.fg(0).bg(7)
 
 			if o > l:
-				cells.text(" ")
+				out.text(" ")
 			elif o == l:
-				cells.dim(1).text("-")
+				out.dim(1).text("-")
 			elif o == p and jinx.half:
-				cells.dim().text("-")
+				out.dim().text("-")
 			elif char is None:
-				cells.bold().fg(1).text("-")
+				out.bold().fg(1).text("-")
 			elif not char.isprintable():
-				cells.dim().text("·")
+				out.dim().text("·")
 			else:
-				cells.text(char)
+				out.text(char)
 
-			cells.bg(None)
-			cells.pop()
+			out.bg(None)
+			out.pop()
 	if not char2:
-		cells.text(" ")
-	return cells
+		out.text(" ")
+	return out
 
 def width(jinx, w):
 	return 1+w+1

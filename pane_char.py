@@ -2,33 +2,33 @@ import draw
 
 def render(jinx, s, e):
 	l, p = len(jinx), jinx.position
-	cells = draw.Draw()
-	cells.text(" ")
+	out = draw.Draw()
+	out.text(" ")
 	for o in range(s, e):
 		byte = jinx[o] if 0 <= o < l else None
 		char = charTable.get(byte)
 
-		cells.push()
+		out.push()
 		if o == p:
-			cells.fg(0).bg(7)
+			out.fg(0).bg(7)
 
 		if o > l:
-			cells.text(" ")
+			out.text(" ")
 		elif o == l:
-			cells.dim(1).text("-")
+			out.dim(1).text("-")
 		elif o == p and jinx.half:
-			cells.dim().text("-")
+			out.dim().text("-")
 		elif char is None:
-			cells.bold().fg(1).text("-")
+			out.bold().fg(1).text("-")
 		elif not char.isprintable():
-			cells.dim().text("·")
+			out.dim().text("·")
 		else:
-			cells.text(char)
+			out.text(char)
 
-		cells.bg(None)
-		cells.pop()
-	cells.text(" ")
-	return cells
+		out.bg(None)
+		out.pop()
+	out.text(" ")
+	return out
 
 def width(jinx, w):
 	return w + 2

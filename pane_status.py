@@ -33,13 +33,13 @@ def draw_ints(jinx, width):
 			u = s = "-"
 		n *= 2
 
-		cells = draw.Draw()
-		cells.text(f"[{u:{wu}} ")
-		if u == s: cells.dim()
-		cells.text(f"({s:{ws}})")
-		cells.dim(False)
-		cells.text(f"]")
-		ints.append(cells)
+		out = draw.Draw()
+		out.text(f"[{u:{wu}} ")
+		if u == s: out.dim()
+		out.text(f"({s:{ws}})")
+		out.dim(False)
+		out.text(f"]")
+		ints.append(out)
 
 	surplus = width - totlen
 	out = draw.Draw()
