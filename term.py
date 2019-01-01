@@ -30,11 +30,11 @@ def wrap(pre, suf):
 
 def mode(*n):
 	n = ";".join(str(n) for n in n)
-	return wrap(f"[?{n}h", f"[?{n}l")
+	return wrap(f"\x1B[?{n}h", f"\x1B[?{n}l")
 
 def umode(*n):
 	n = ";".join(str(n) for n in n)
-	return wrap(f"[?{n}l", f"[?{n}h")
+	return wrap(f"\x1B[?{n}l", f"\x1B[?{n}h")
 
 def getch():
 	fd = sys.stdin.fileno()
