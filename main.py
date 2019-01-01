@@ -1,5 +1,6 @@
-import term
 import sys
+
+import term
 import jinx
 import ui
 
