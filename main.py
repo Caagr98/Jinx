@@ -12,8 +12,6 @@ def __main__():
 			k = term.getch().decode()
 			u.input(k)
 			u.render()
-def enc(s):
-	return "".join(c if c.isprintable() else '·' for c in s.decode("latin1"))
 
 if __name__ == "__main__":
 	if not sys.stdout.isatty() and not sys.stdin.isatty():
