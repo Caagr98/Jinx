@@ -88,7 +88,7 @@ class MainWindow:
 
 		offsetW = pane_offset.width(self.jinx, self.width)
 		hexW = pane_hex.width(self.jinx, self.width)
-		charW = pane_char.width(self.jinx, self.width) if self.jinx.encoding != "sjis" else pane_sjis.width(self.jinx, self.width)
+		charW = (pane_char if self.jinx.encoding != "sjis" else pane_sjis).width(self.jinx, self.width)
 
 		out = draw.Draw()
 		out.str.write("\x1B[2J")
@@ -102,11 +102,11 @@ class MainWindow:
 
 		out.str.write("\n")
 		for s, e in ((i*self.width, (i+1)*self.width) for i in range(self.scroll, self.scroll+height)):
-			out.merge(pane_offset.render(self.jinx, s, e))
+			pane_offset.render(out, self.jinx, s, e)
 			out.text("│" if self.jinx.char else "├")
-			out.merge(pane_hex.render(self.jinx, s, e))
+			pane_hex.render(out, self.jinx, s, e)
 			out.text("├" if self.jinx.char else "┤")
-			out.merge(pane_char.render(self.jinx, s, e) if self.jinx.encoding != "sjis" else pane_sjis.render(self.jinx, s, e))
+			(pane_char if self.jinx.encoding != "sjis" else pane_sjis).render(out, self.jinx, s, e)
 			out.text("┤" if self.jinx.char else "│")
 			out.str.write("\n")
 

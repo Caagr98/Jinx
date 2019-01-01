@@ -1,8 +1,5 @@
-import draw
-
-def render(jinx, s, e):
+def render(out, jinx, s, e):
 	l, p = len(jinx), jinx.position
-	out = draw.Draw()
 	out.text(" ")
 	for o in range(s, e):
 		byte = jinx[o] if 0 <= o < l else None

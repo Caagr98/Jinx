@@ -1,10 +1,8 @@
-import draw
 from wcwidth import wcwidth
 
-def render(jinx, s, e):
+def render(out, jinx, s, e):
 	l, p = len(jinx), jinx.position
 	char2 = None # TODO
-	out = draw.Draw()
 	out.text(" ")
 	for o in range(s, e):
 		if char2:
