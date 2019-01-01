@@ -1,7 +1,8 @@
 from wcwidth import wcwidth
+import pane_char
 
 def render(out, jinx, s, e):
-	l, p = len(jinx), jinx.position
+	l, p, enc = len(jinx), jinx.position, jinx.encoding
 	char2 = None # TODO
 	out.text(" ")
 	for o in range(s, e):
@@ -17,10 +18,10 @@ def render(out, jinx, s, e):
 			out.pop()
 			char2 = None
 		else:
-			byte = jinx[o] if 0 <= o < l else None
-			bytex = jinx[o+1] if 0 <= o+1 < l else None
-			char2 = sjis2Table.get((byte, bytex))
-			char = char2 or sjisTable.get(byte)
+			byte1 = jinx[o] if 0 <= o < l else None
+			byte2 = jinx[o+1] if 0 <= o+1 < l else None
+			char2 = sjisTable[enc, byte1, byte2]
+			char = char2 or sjisTable[enc, byte1]
 
 			out.push()
 			if o == p or char2 and o+1 == p:
@@ -45,17 +46,16 @@ def render(out, jinx, s, e):
 		out.text(" ")
 	return out
 
-def width(jinx, w):
-	return 1+w+1
+width = pane_char.width
 
-sjisTable = {}
-sjis2Table = {}
-for v in range(0x100):
-	try: [sjisTable[v]] = bytes([v]).decode("sjis")
-	except: pass
-for v in range(0x100):
-	for u in range(0x100):
-		try:
-			[ch] = bytes([v,u]).decode("sjis")
-			sjis2Table[v,u] = ch if wcwidth(ch) == 2 else ch + " "
-		except: pass
+class SjisDict(pane_char.CharDict):
+	def __missing__(self, key):
+		if len(key) == 3:
+			(enc, byte1, byte2) = key
+			try:
+				[ch] = bytes([byte1, byte2]).decode("sjis")
+				self[key] = ch if wcwidth(ch) == 2 else ch + " "
+			except: self[key] = None
+			return self[key]
+		return super().__missing__(key)
+sjisTable = SjisDict()

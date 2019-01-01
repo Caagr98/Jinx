@@ -1,9 +1,9 @@
 def render(out, jinx, s, e):
-	l, p = len(jinx), jinx.position
+	l, p, enc = len(jinx), jinx.position, jinx.encoding
 	out.text(" ")
 	for o in range(s, e):
 		byte = jinx[o] if 0 <= o < l else None
-		char = charTable.get(byte)
+		char = charTable[enc, byte]
 
 		out.push()
 		if o == p:
@@ -30,7 +30,12 @@ def render(out, jinx, s, e):
 def width(jinx, w):
 	return w + 2
 
-charTable = {}
-for v in range(0x100):
-	try: [charTable[v]] = bytes([v]).decode("latin1")
-	except: pass
+class CharDict(dict):
+	def __missing__(self, key):
+		if len(key) == 2:
+			(enc, byte) = key
+			try:
+				[self[key]] = bytes([byte]).decode(enc)
+			except: self[key] = None
+			return self[key]
+charTable = CharDict()
