@@ -17,16 +17,20 @@ class Draw:
 	def bg(self, v): self._bg = v; return self
 	def bold(self, v=True): self._bold = v; return self
 	def dim(self, v=True): self._dim = v; return self
+	def pos(self, x, y): self.str.write(f"\x1B[{y+1};{x+1}H"); return self
+
+	def raw(self, text):
+		self.str.write(text)
+		return self
 	def text(self, text):
 		self.len += wcwidth.wcswidth(text)
 		fmt = (self._fg, self._bg, self._bold, self._dim)
-		self.str.write(delta(self._lastFmt, fmt))
+		self.raw(delta(self._lastFmt, fmt)).raw(text)
 		self._lastFmt = fmt
-		self.str.write(text)
 		return self
 	def merge(self, other):
 		self.len += other.len
-		self.str.write(other.str.getvalue())
+		self.raw(other.str.getvalue())
 		self._lastFmt = other._lastFmt
 		return self
 
