@@ -103,18 +103,19 @@ class MainWindow:
 			self.scrollIntoView()
 			height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
 			s2, l2, p2 = self.scroll, len(self.jinx), self.jinx.position
+			lines = {p2 // self.width}
+			prefix = ""
 			if (s2, l2, p2) != (s, l, p):
-				lines = lineset(p // self.width, p2 // self.width)
+				lines |= lineset(p // self.width, p2 // self.width)
 				if l != l2:
 					lines |= lineset(p // self.width, self.scroll+height)
-				prefix = ""
 				if s2 < s:
 					prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s-s2}T\x1B[r"
 					lines |= lineset(self.scroll, self.scroll+(s2-s))
 				if s2 > s:
 					prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s2-s}S\x1B[r"
 					lines |= lineset(self.scroll+height-(s2-s), self.scroll+height)
-				self.render(lines, prefix=prefix)
+			self.render(lines, prefix=prefix)
 
 	def render(self, lines=None, *, prefix="\x1B[2J"):
 		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
