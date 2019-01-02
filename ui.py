@@ -9,6 +9,8 @@ import pane_sjis
 import pane_status
 import draw
 
+class Repaint(BaseException): pass
+
 class MainWindow:
 	__slots__ = ["jinx", "scroll", "scrollOff", "uiTop", "uiBottom", "once", "width"]
 	def __init__(self, jinx):
@@ -22,20 +24,22 @@ class MainWindow:
 
 	def input(self, key):
 		with self.repainting():
-			if key == "\x03":    raise SystemExit
-			if key == "\x1B":    self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False; return
-			if key == "\x1B[A":  self.move("up"); return
-			if key == "\x1B[B":  self.move("down"); return
-			if key == "\x1B[A":  self.move("up"); return
-			if key == "\x1B[B":  self.move("down"); return
-			if key == "\x1B[C":  self.move("right"); return
-			if key == "\x1B[D":  self.move("left"); return
-			if key == "\x1B[5~": self.move("pgup"); return
-			if key == "\x1B[6~": self.move("pgdn"); return
-			if key == "\x1B[F":  self.move("end"); return
-			if key == "\x1B[H":  self.move("home"); return
-			if key == "\x1B[2~": self.jinx.commit(); self.jinx.insert = not self.jinx.insert; return
-			if key == "\t":      self.jinx.commit(); self.jinx.char = not self.jinx.char; return
+			if key == "~resize~": raise Repaint()
+			if key == "\x0C":     raise Repaint()
+			if key == "\x03":     raise SystemExit
+			if key == "\x1B":     self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False; return
+			if key == "\x1B[A":   self.move("up"); return
+			if key == "\x1B[B":   self.move("down"); return
+			if key == "\x1B[A":   self.move("up"); return
+			if key == "\x1B[B":   self.move("down"); return
+			if key == "\x1B[C":   self.move("right"); return
+			if key == "\x1B[D":   self.move("left"); return
+			if key == "\x1B[5~":  self.move("pgup"); return
+			if key == "\x1B[6~":  self.move("pgdn"); return
+			if key == "\x1B[F":   self.move("end"); return
+			if key == "\x1B[H":   self.move("home"); return
+			if key == "\x1B[2~":  self.jinx.commit(); self.jinx.insert = not self.jinx.insert; return
+			if key == "\t":       self.jinx.commit(); self.jinx.char = not self.jinx.char; return
 
 			if not self.jinx.insert and not self.jinx.char:
 				if key == "h": self.move("left"); return
@@ -91,22 +95,26 @@ class MainWindow:
 		def lineset(a, b):
 			return set(range(min(a, b), max(a,b)+1))
 		s, l, p = self.scroll, len(self.jinx), self.jinx.position
-		yield
-		self.scrollIntoView()
-		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
-		s2, l2, p2 = self.scroll, len(self.jinx), self.jinx.position
-		if (s2, l2, p2) != (s, l, p):
-			lines = lineset(p // self.width, p2 // self.width)
-			if l != l2:
-				lines |= lineset(p // self.width, self.scroll+height)
-			prefix = ""
-			if s2 < s:
-				prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s-s2}T\x1B[r"
-				lines |= lineset(self.scroll, self.scroll+(s2-s))
-			if s2 > s:
-				prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s2-s}S\x1B[r"
-				lines |= lineset(self.scroll+height-(s2-s), self.scroll+height)
-			self.render(lines, prefix=prefix)
+		try:
+			yield
+		except Repaint:
+			self.render()
+		else:
+			self.scrollIntoView()
+			height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
+			s2, l2, p2 = self.scroll, len(self.jinx), self.jinx.position
+			if (s2, l2, p2) != (s, l, p):
+				lines = lineset(p // self.width, p2 // self.width)
+				if l != l2:
+					lines |= lineset(p // self.width, self.scroll+height)
+				prefix = ""
+				if s2 < s:
+					prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s-s2}T\x1B[r"
+					lines |= lineset(self.scroll, self.scroll+(s2-s))
+				if s2 > s:
+					prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s2-s}S\x1B[r"
+					lines |= lineset(self.scroll+height-(s2-s), self.scroll+height)
+				self.render(lines, prefix=prefix)
 
 	def render(self, lines=None, *, prefix="\x1B[2J"):
 		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
