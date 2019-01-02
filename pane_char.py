@@ -38,4 +38,5 @@ class CharDict(dict):
 				[self[key]] = bytes([byte]).decode(enc)
 			except: self[key] = None
 			return self[key]
+		return super().__missing__(key)
 charTable = CharDict()
