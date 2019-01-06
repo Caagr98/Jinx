@@ -8,9 +8,10 @@ def __main__():
 	buf = open(sys.argv[1], "rb").read()
 	u = ui.MainWindow(jinx.Jinx(buf))
 	with term.raw(no_signals=True), term.altbuf, term.hide_cursor, term.resize_pipe(b"~resize~") as pipe:
-		u.render()
 		while True:
-			u.input(term.getch([pipe]).decode())
+			input = term.getch([pipe]).decode()
+			u.input(input)
+			print("\x1B[1;150H" + repr(input))
 
 if __name__ == "__main__":
 	if not sys.stdout.isatty() and not sys.stdin.isatty():

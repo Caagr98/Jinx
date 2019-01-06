@@ -8,11 +8,12 @@ import pane_char
 import pane_sjis
 import pane_status
 import draw
+import readline
 
 class Repaint(BaseException): pass
 
 class MainWindow:
-	__slots__ = ["jinx", "scroll", "scrollOff", "uiTop", "uiBottom", "once", "width"]
+	__slots__ = ["jinx", "scroll", "scrollOff", "uiTop", "uiBottom", "once", "width", "_prompt", "rl"]
 	def __init__(self, jinx):
 		self.jinx = jinx
 		self.once = False
@@ -21,54 +22,81 @@ class MainWindow:
 		self.uiTop, self.uiBottom = 1, 3
 		self.width = 32
 		self.scrollIntoView()
+		self.prompt = None
+
+	@property
+	def displaywidth(self):
+		offsetW = pane_offset.width(self.jinx, self.width)
+		hexW = pane_hex.width(self.jinx, self.width)
+		charW = (pane_char if self.jinx.encoding != "sjis" else pane_sjis).width(self.jinx, self.width)
+		return offsetW, hexW, charW
 
 	def input(self, key):
 		with self.repainting():
 			if key == "~resize~": raise Repaint()
 			if key == "\x0C":     raise Repaint()
-			if key == "\x03":     raise SystemExit
-			if key == "\x1B":     self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False; return
-			if key == "\x1B[A":   self.move("up"); return
-			if key == "\x1B[B":   self.move("down"); return
-			if key == "\x1B[A":   self.move("up"); return
-			if key == "\x1B[B":   self.move("down"); return
-			if key == "\x1B[C":   self.move("right"); return
-			if key == "\x1B[D":   self.move("left"); return
-			if key == "\x1B[5~":  self.move("pgup"); return
-			if key == "\x1B[6~":  self.move("pgdn"); return
-			if key == "\x1B[F":   self.move("end"); return
-			if key == "\x1B[H":   self.move("home"); return
-			if key == "\x1B[2~":  self.jinx.commit(); self.jinx.insert = not self.jinx.insert; return
-			if key == "\t":       self.jinx.commit(); self.jinx.char = not self.jinx.char; return
 
-			if not self.jinx.insert and not self.jinx.char:
-				if key == "h": self.move("left"); return
-				if key == "j": self.move("down"); return
-				if key == "k": self.move("up"); return
-				if key == "l": self.move("right"); return
-				if key == "H": self.move("home"); return
-				if key == "L": self.move("end"); return
-				if key == "^": self.move("home"); return
-				if key == "$": self.move("end"); return
-				if key == "g": self.move("top"); return
-				if key == "G": self.move("bottom"); return
-				if key == "x": self.jinx.begin(); self.jinx.written.append(0); self.jinx.end += 1; return
-				if key == "r": self.jinx.commit(); self.jinx.char = self.once = True; return
-				if key == "R": self.jinx.commit(); self.jinx.char = True; return
-				if key == "i": self.jinx.commit(); self.jinx.insert = True; return
-				if key == "I": self.jinx.commit(); self.jinx.char = self.jinx.insert = True; return
-				if key == "u": self.jinx.commit(); self.jinx.undo(self._undo, self._redo); return
-				if key == "U": self.jinx.commit(); self.jinx.undo(self._redo, self._undo); return
-				if key == "\x12": self.jinx.commit(); self.jinx.undo(self._redo, self._undo); return
+			if self.prompt:
+				self.rl.scrollOff = self.scrollOff
+				self.rl.width = sum(self.displaywidth)-14
+				result = self.rl.input(key)
+				if result is False:
+					self.prompt.cancel()
+					self.prompt = None
+				elif result is True:
+					self.prompt.update(self.rl.text)
+				else:
+					self.prompt.accept(result)
+					self.prompt = None
+				return
 
-			if key == "\x1B[3~": self.jinx.begin(); self.jinx.end += 1; return
-			if key == "\x7F": self.jinx.begin(); self.jinx.erase(); return
-			if self.jinx.write_key(key) and self.once: self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False; return
+			norm = not self.jinx.insert and not self.jinx.char
 
-	def move(self, how):
-		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
+			if 0: pass
+			elif key == "\x03":     raise SystemExit
+			elif key == "\x1B":     self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False
+			elif key == "\x1B[A":   self.move("up")
+			elif key == "\x1B[B":   self.move("down")
+			elif key == "\x1B[C":   self.move("right")
+			elif key == "\x1B[D":   self.move("left")
+			elif key == "\x1B[5~":  self.move("pgup")
+			elif key == "\x1B[6~":  self.move("pgdn")
+			elif key == "\x1B[F":   self.move("end")
+			elif key == "\x1B[H":   self.move("home")
+			elif key == "\x09":     self.jinx.commit(); self.jinx.char = not self.jinx.char # ^I tab
+			elif key == "\x1B[2~":  self.jinx.commit(); self.jinx.insert = not self.jinx.insert
+			elif key == "\x1B[3~":  self.jinx.begin(); self.jinx.end += 1
+			elif key == "\x7F":     self.jinx.begin(); self.jinx.erase()
+			elif norm and key == "h": self.move("left")
+			elif norm and key == "j": self.move("down")
+			elif norm and key == "k": self.move("up")
+			elif norm and key == "l": self.move("right")
+			elif norm and key == "H": self.move("home")
+			elif norm and key == "L": self.move("end")
+			elif norm and key == "^": self.move("home")
+			elif norm and key == "$": self.move("end")
+			elif norm and key == "g": self.move("top")
+			elif norm and key == "G": self.move("bottom")
+			elif norm and key == "x": self.jinx.begin(); self.jinx.written.append(0); self.jinx.end += 1
+			elif norm and key == "r": self.jinx.commit(); self.jinx.char = self.once = True
+			elif norm and key == "R": self.jinx.commit(); self.jinx.char = True
+			elif norm and key == "i": self.jinx.commit(); self.jinx.insert = True
+			elif norm and key == "I": self.jinx.commit(); self.jinx.char = self.jinx.insert = True
+			elif norm and key == "u": self.jinx.commit(); self.jinx.undo(self._undo, self._redo)
+			elif norm and key == "U": self.jinx.commit(); self.jinx.undo(self._redo, self._undo)
+			elif norm and key == "\x12": self.jinx.commit(); self.jinx.undo(self._redo, self._undo) # ^R redo
+			elif norm and key == "/": self.jinx.commit(); self.prompt = SeekPrompt(self)
+			elif norm and key == ":": self.jinx.commit(); self.prompt = CommandPrompt(self)
+			elif self.jinx.write_key(key):
+				if self.once: self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False
+
+	def move(self, where):
 		self.jinx.commit()
-		self.jinx.position = {
+		self.jinx.position = self.pos(where)
+
+	def pos(self, where):
+		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
+		return {
 			"left":  self.jinx.position - 1,
 			"right": self.jinx.position + 1,
 			"up":    self.jinx.position - self.width,
@@ -79,7 +107,7 @@ class MainWindow:
 			"end":   ceil(self.jinx.position / self.width) * self.width - 1,
 			"top":   0,
 			"bottom":len(self.jinx.buffer),
-		}[how]
+		}[where]
 
 	def scrollIntoView(self):
 		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
@@ -109,10 +137,12 @@ class MainWindow:
 				lines |= lineset(p // self.width, p2 // self.width)
 				if l != l2:
 					lines |= lineset(p // self.width, self.scroll+height)
-				if s2 < s:
+				if abs(s-s2) >= height:
+					lines |= lineset(self.scroll, self.scroll+height)
+				if 0 < s-s2 < height:
 					prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s-s2}T\x1B[r"
 					lines |= lineset(self.scroll, self.scroll+(s2-s))
-				if s2 > s:
+				if 0 < s2-s < height:
 					prefix += f"\x1B[{self.uiTop+1};{self.uiTop+height+1}r\x1B[{s2-s}S\x1B[r"
 					lines |= lineset(self.scroll+height-(s2-s), self.scroll+height)
 			self.render(lines, prefix=prefix)
@@ -120,9 +150,7 @@ class MainWindow:
 	def render(self, lines=None, *, prefix="\x1B[2J"):
 		height = os.get_terminal_size()[1] - self.uiTop - self.uiBottom
 
-		offsetW = pane_offset.width(self.jinx, self.width)
-		hexW = pane_hex.width(self.jinx, self.width)
-		charW = (pane_char if self.jinx.encoding != "sjis" else pane_sjis).width(self.jinx, self.width)
+		offsetW, hexW, charW = self.displaywidth
 
 		out = draw.Draw()
 		out.raw(prefix)
@@ -145,4 +173,47 @@ class MainWindow:
 			(pane_char if self.jinx.encoding != "sjis" else pane_sjis).render(out, self.jinx, s, e)
 			out.text("┤" if self.jinx.char else "│")
 
+		if self.prompt:
+			out.pos(7, self.uiTop+height)
+			out.text("[")
+			self.rl.render(out)
+			out.text("]")
+
 		print(out, end="", flush=True)
+
+	@property
+	def prompt(self):
+		return self._prompt
+	@prompt.setter
+	def prompt(self, v):
+		if v is None:
+			self.rl = self._prompt = None
+		else:
+			self.rl = readline.Readline(prefix=v.prefix())
+			self.rl.scrollOff = self.scrollOff
+			self.rl.width = sum(self.displaywidth)-14
+			self._prompt = v
+
+class SeekPrompt:
+	__slots__ = ["ui", "origpos", "origscroll"]
+	def __init__(self, ui):
+		self.ui = ui
+		self.origpos, self.origscroll = self.ui.jinx.position, self.ui.scroll
+	def prefix(self): return "/"
+	def cancel(self): self.ui.jinx.position, self.ui.scroll = self.origpos, self.origscroll
+	def update(self, string):
+		try:
+			self.ui.jinx.position = int(string, 16)
+		except ValueError:
+			self.cancel()
+	accept = update
+
+class CommandPrompt:
+	__slots__ = ["ui"]
+	def __init__(self, ui):
+		self.ui = ui
+	def prefix(self): return ":"
+	def cancel(self): pass
+	def update(self, string): pass
+	def accept(self, string):
+		cmd, arg = string.split(" ", 1) if " " in string else (string, None)
