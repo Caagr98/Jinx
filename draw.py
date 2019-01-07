@@ -1,4 +1,4 @@
-import wcwidth
+from wcwidth import wcswidth
 import io
 
 defaultFormat = (None, None, False, False, False)
@@ -36,7 +36,7 @@ class Draw:
 			self.text(text[0])
 			self.pop()
 			return self.text(text[1:])
-		self.len += wcwidth.wcswidth(text)
+		self.len += wcswidth(text)
 		fmt = (self._fg, self._bg, self._bold, self._dim, self._invert)
 		self.raw(delta(self._lastFmt, fmt)).raw(text)
 		self._lastFmt = fmt
@@ -51,6 +51,31 @@ class Draw:
 		return self.len
 	def __str__(self):
 		return self.str.getvalue() + delta(self._lastFmt, defaultFormat)
+
+	def pretty(self, text, *, width=None, scroll=0, fill=False, cursor=None):
+		if width is None:
+			if fill: raise ValueError("Can't fill no width!")
+			width = 2**32
+
+		w = 0
+		for i, ch in enumerate(text):
+			w1 = w
+			w2 = w+wcswidth(ch)
+			w = w2
+
+			if w2 <= scroll: continue
+			if w1 >= scroll+width: break
+
+			if i != 0 and w1 <= scroll < w2:
+				self.push().dim().text("…" * (w2-scroll)).pop()
+			elif i != len(text)-1 and w1 < scroll+width <= w2:
+				self.push().dim().text("…" * (scroll+width-w1)).pop()
+			elif i == cursor:
+				self.push().cursor().invert().text(ch).pop()
+			else:
+				self.text(ch)
+		if fill:
+			self.text(" " * (scroll+width-w))
 
 def delta(old, new):
 	if old != new:

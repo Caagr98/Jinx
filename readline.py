@@ -101,29 +101,7 @@ class Readline:
 		self.point = p
 
 	def render(self, out):
-		text = self.displaytext
-		point = self.displaypoint
-
-		l, r = self.scroll, self.scroll+self.width
-
-		width = 0
-		for i, ch in enumerate(text):
-			width1 = width
-			width2 = width+wcswidth(ch)
-			width = width2
-
-			if width2 <= l: continue
-			if width1 >= r: break
-
-			if i != 0 and width1 <= l < width2:
-				out.push().dim().text("…" * (width2-l)).pop()
-			elif i != len(text)-1 and width1 < r <= width2:
-				out.push().dim().text("…" * (r-width1)).pop()
-			elif i == point:
-				out.push().cursor().invert().text(ch).pop()
-			else:
-				out.text(ch)
-		out.text(" " * (r - width))
+		out.pretty(self.displaytext, width=self.width, scroll=self.scroll, cursor=self.displaypoint, fill=True)
 
 if __name__ == "__main__":
 	def main():
