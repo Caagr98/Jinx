@@ -83,9 +83,9 @@ class MainWindow:
 			elif norm and key == "R": self.jinx.commit(); self.jinx.char = True
 			elif norm and key == "i": self.jinx.commit(); self.jinx.insert = True
 			elif norm and key == "I": self.jinx.commit(); self.jinx.char = self.jinx.insert = True
-			elif norm and key == "u": self.jinx.commit(); self.jinx.undo(self._undo, self._redo)
-			elif norm and key == "U": self.jinx.commit(); self.jinx.undo(self._redo, self._undo)
-			elif norm and key == "\x12": self.jinx.commit(); self.jinx.undo(self._redo, self._undo) # ^R redo
+			elif norm and key == "u": self.jinx.commit(); self.jinx.undo()
+			elif norm and key == "U": self.jinx.commit(); self.jinx.redo()
+			elif norm and key == "\x12": self.jinx.commit(); self.jinx.redo() # ^R
 			elif norm and key == "/": self.jinx.commit(); self.prompt = SeekPrompt(self)
 			elif norm and key == ":": self.jinx.commit(); self.prompt = CommandPrompt(self)
 			elif self.jinx.write_key(key):
