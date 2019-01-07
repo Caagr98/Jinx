@@ -60,7 +60,7 @@ class Draw:
 		w = 0
 		for i, ch in enumerate(text):
 			w1 = w
-			w2 = w+wcswidth(ch)
+			w2 = w+(wcswidth(ch) if ch.isprintable() else 1)
 			w = w2
 
 			if w2 <= scroll: continue
@@ -68,12 +68,18 @@ class Draw:
 
 			if i != 0 and w1 <= scroll < w2:
 				self.push().dim().text("…" * (w2-scroll)).pop()
-			elif i != len(text)-1 and w1 < scroll+width <= w2:
+				continue
+			if i != len(text)-1 and w1 < scroll+width <= w2:
 				self.push().dim().text("…" * (scroll+width-w1)).pop()
-			elif i == cursor:
-				self.push().cursor().invert().text(ch).pop()
-			else:
+				continue
+			self.push()
+			if i == cursor:
+				self.cursor().invert()
+			if ch.isprintable():
 				self.text(ch)
+			else:
+				self.dim().text("·")
+			self.pop()
 		if fill:
 			self.text(" " * (scroll+width-w))
 
