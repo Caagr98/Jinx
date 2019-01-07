@@ -6,7 +6,9 @@ def render(out, jinx, s, e):
 
 		out.push()
 		if o == p:
-			out.cursor(not jinx.char)
+			out.invert()
+			if not jinx.char:
+				out.cursor()
 
 		if o > l:
 			out.text("  ")

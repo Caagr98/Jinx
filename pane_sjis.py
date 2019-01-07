@@ -9,7 +9,9 @@ def render(out, jinx, s, e):
 		if char2:
 			out.push()
 			if o == p:
-				out.cursor(jinx.char)
+				out.invert()
+				if jinx.char:
+					out.cursor()
 			if o == s:
 				out.str.write("\x1B[D")
 				out.dim().text(char2)
