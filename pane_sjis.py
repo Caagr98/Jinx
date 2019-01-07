@@ -9,7 +9,7 @@ def render(out, jinx, s, e):
 		if char2:
 			out.push()
 			if o == p:
-				out.fg(0).bg(7)
+				out.cursor(jinx.char)
 			if o == s:
 				out.str.write("\x1B[D")
 				out.dim().text(char2)

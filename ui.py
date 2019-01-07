@@ -178,6 +178,7 @@ class MainWindow:
 			out.text("[")
 			self.rl.render(out)
 			out.text("]")
+		out.raw("\x1B[u")
 
 		print(out, end="", flush=True)
 

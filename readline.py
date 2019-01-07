@@ -120,7 +120,7 @@ class Readline:
 			elif i != len(text)-1 and width1 < r <= width2:
 				out.push().dim().text("…" * (r-width1)).pop()
 			elif i == point:
-				out.push().bg(7).fg(0).text(ch).pop()
+				out.push().cursor(True).text(ch).pop()
 			else:
 				out.text(ch)
 		out.text(" " * (r - width))

@@ -6,7 +6,7 @@ def render(out, jinx, s, e):
 
 		out.push()
 		if o == p:
-			out.fg(0).bg(7)
+			out.cursor(not jinx.char)
 
 		if o > l:
 			out.text("  ")
@@ -19,6 +19,7 @@ def render(out, jinx, s, e):
 				out.dim()
 			out.text(f"{byte:02X}")
 		out.bg(None)
+		out.invert(0)
 
 		out.text(" ")
 		if (o+1-e) and not (o+1-s) % 8:
