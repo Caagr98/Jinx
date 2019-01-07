@@ -48,12 +48,13 @@ class MainWindow:
 				else:
 					self.prompt.accept(result)
 					self.prompt = None
+					raise Repaint()
 				return
 
 			norm = not self.jinx.insert and not self.jinx.char
 
 			if 0: pass
-			elif key == "\x03":     raise SystemExit
+			elif key == "\x03":     raise SystemExit # ^C
 			elif key == "\x1B":     self.jinx.commit(); self.jinx.insert = self.jinx.char = self.once = False
 			elif key == "\x1B[A":   self.move("up")
 			elif key == "\x1B[B":   self.move("down")
@@ -167,11 +168,11 @@ class MainWindow:
 			s, e = i*self.width, (i+1)*self.width
 			out.pos(0, self.uiTop+i-self.scroll)
 			pane_offset.render(out, self.jinx, s, e)
-			out.text("│" if self.jinx.char else "├")
+			out.text("│")
 			pane_hex.render(out, self.jinx, s, e)
-			out.text("├" if self.jinx.char else "┤")
+			out.text("│")
 			(pane_char if self.jinx.encoding != "sjis" else pane_sjis).render(out, self.jinx, s, e)
-			out.text("┤" if self.jinx.char else "│")
+			out.text("│")
 
 		if self.prompt:
 			out.pos(7, self.uiTop+height)
