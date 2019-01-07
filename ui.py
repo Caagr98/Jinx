@@ -179,6 +179,17 @@ class MainWindow:
 			out.text("[")
 			self.rl.render(out)
 			out.text("]")
+
+		out.pos(7, 0)
+		out.text("[")
+		if self.jinx.modified:
+			out.push().dim().text("*").pop()
+		if self.jinx.fname:
+			out.pretty(self.jinx.fname, width=sum(self.displaywidth)-14-self.jinx.modified)
+		else:
+			out.push().dim().text("<No name>").pop()
+		out.text("]")
+
 		out.raw("\x1B[u")
 
 		print(out, end="", flush=True)

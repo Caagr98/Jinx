@@ -1,14 +1,15 @@
 class Jinx:
-	__slots__ = ["buffer", "_fname", "written", "insert", "char", "half", "_undo", "_redo", "encoding", "_start", "_end"]
+	__slots__ = ["buffer", "fname", "written", "insert", "char", "half", "_undo", "_redo", "encoding", "_start", "_end", "_edit", "_lastWrite"]
 	def __init__(self, buffer, position=0, fname=None):
 		self.buffer = bytearray(buffer)
-		self._fname = fname
+		self.fname = fname
 
 		self.written = None
 		self.insert = self.char = False
 		self.half = False
 		self._undo = []
 		self._redo = []
+		self._edit = self._lastWrite = 0
 
 		self.position = position
 
@@ -45,14 +46,20 @@ class Jinx:
 		if self.written is None: return 0
 		return len(self.written)
 
+	@property
+	def modified(self):
+		print(self._edit, self._lastWrite)
+		return self._edit != self._lastWrite or self.written is not None
+
 	def begin(self):
 		if self.written is None:
 			self.written = bytearray()
 
 	def commit(self):
 		if self.written is not None:
-			self._undo.append((self.start, self.start+self._nwritten, self.buffer[self.start:self.end]))
+			self._undo.append((self.start, self.start+self._nwritten, self.buffer[self.start:self.end], self._edit))
 			self._redo.clear()
+			self._edit = self._edit + 1
 
 			self.buffer[self.start:self.end] = self.written
 
@@ -64,10 +71,11 @@ class Jinx:
 
 	def _undoredo(self, undo, redo):
 		if undo:
-			start, end, text = undo.pop()
-			redo.append((start, start+len(text), self.buffer[start:end]))
+			start, end, text, edit = undo.pop()
+			redo.append((start, start+len(text), self.buffer[start:end], self._edit))
 			self.buffer[start:end] = text
 			self.position = end
+			self._edit = edit
 
 	def undo(self): self._undoredo(self._undo, self._redo)
 	def redo(self): self._undoredo(self._redo, self._undo)
